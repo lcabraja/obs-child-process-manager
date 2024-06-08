@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.16...3.26)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCOPE)
+include(GNUInstallDirs)
 
 project(${_name} VERSION ${_version})
 
@@ -37,3 +38,16 @@ endif()
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.c)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
+
+# Define the plugin output directory
+if(APPLE)
+    set(PLUGIN_OUTPUT_DIR "/Applications/OBS.app/Contents/PlugIns")
+elseif(WIN32)
+    set(PLUGIN_OUTPUT_DIR "$ENV{ProgramFiles}/obs-studio/obs-plugins/64bit")
+elseif(UNIX)
+    set(PLUGIN_OUTPUT_DIR "/usr/lib/obs-plugins")
+endif()
+
+# Add a post-build command to copy the plugin to the OBS plugins directory
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>" "${PLUGIN_OUTPUT_DIR}/$<TARGET_FILE_NAME:${CMAKE_PROJECT_NAME}>")
